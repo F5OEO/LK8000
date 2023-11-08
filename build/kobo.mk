@@ -11,7 +11,15 @@ FONTS_FILES = $(patsubst %,$(FONTS_DIR)/%.ttf,$(FONTS_NAMES))
 
 SYSROOT = $(shell $(CC) -print-sysroot)
 
-# install our version of the system libraries in /opt/LK8000/lib; this
+ifeq ($(TARGET_IS_KOBODL),y)
+# DO NOT install our version of the system libraries 
+KOBO_SYS_LIB_NAMES = \
+	libstdc++.so.6 \
+
+KOBO_SYS_LIB_PATHS = $(addprefix $(SYSROOT)/lib/,$(KOBO_SYS_LIB_NAMES))
+KOBO_SYS_LIB_PATHS += $(KOBO)/lib/libGeographic.so.19
+else
+# Install our version of the system libraries in /opt/LK8000/lib; this
 # is necessary because:
 # - we cannot link statically because we need NSS (name service
 #   switch) modules
@@ -33,6 +41,7 @@ KOBO_SYS_LIB_PATHS += $(KOBO)/lib/libpng16.so.16
 KOBO_SYS_LIB_PATHS += $(KOBO)/lib/libfreetype.so.6
 KOBO_SYS_LIB_PATHS += $(KOBO)/lib/libGeographic.so.19
 
+endif	
 KOBO_POWER_OFF_BIN = PowerOff
 
 KOBO_POWER_OFF_SOURCES = \

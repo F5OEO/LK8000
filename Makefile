@@ -128,6 +128,16 @@ endif
 ifeq ($(TARGET),KOBO)
   KOBO ?= /opt/kobo-rootfs
   TARGET_IS_KOBO :=y
+  TARGET_IS_KOBODL :=n
+  CONFIG_LINUX   :=y
+  CONFIG_ANDROID :=n
+  MINIMAL        :=n
+endif
+
+ifeq ($(TARGET),KOBODL)
+  KOBO ?= /opt/kobo-rootfs
+  TARGET_IS_KOBO :=y
+  TARGET_IS_KOBODL :=y
   CONFIG_LINUX   :=y
   CONFIG_ANDROID :=n
   MINIMAL        :=n
@@ -312,8 +322,13 @@ ifeq ($(DEBUG),y)
  OUTPUTS 	:= LK8000-$(TARGET)_debug$(SUFFIX)
  OUTPUTS_NS	:= LK8000-$(TARGET)_debug-ns$(SUFFIX)
 else
+ifeq ($(TARGET),KOBODL) # Easy trick to be compatoble with scripts
+ OUTPUTS 	:= LK8000-KOBO$(SUFFIX)
+ OUTPUTS_NS	:= LK8000-$(TARGET)KOBO-ns$(SUFFIX)
+ else
  OUTPUTS 	:= LK8000-$(TARGET)$(SUFFIX)
  OUTPUTS_NS	:= LK8000-$(TARGET)-ns$(SUFFIX)
+ endif
 endif
 
 CE_DEFS :=
@@ -660,13 +675,21 @@ CXXFLAGS += -fopenmp
 LDFLAGS += -fopenmp
 endif
 
-ifeq ($(TARGET_IS_KOBO),y)
+ifeq ($(TARGET_IS_KOBO)$(TARGET_IS_KOBODL),yn)
  # use our glibc version and its ld.so on the Kobo, not the one from
  # the stock Kobo firmware, as it may be incompatible
  LDFLAGS += -Wl,--dynamic-linker=/opt/LK8000/lib/ld-linux-armhf.so.3
  LDFLAGS += -Wl,--rpath=/opt/LK8000/lib
+endif
+
+ifeq ($(TARGET_IS_KOBO)$(TARGET_IS_KOBODL),yy)
+ # use our glibc version and its ld.so on the Kobo, not the one from
+ # the stock Kobo firmware, as it may be incompatible
+ #LDFLAGS += -Wl,--dynamic-linker=/opt/LK8000/lib/ld-linux-armhf.so.3
+ LDFLAGS += -Wl,--rpath=/opt/LK8000/lib
 
 endif
+
 
 ifeq ($(HOST_IS_PI)$(TARGET_IS_PI),ny)
  LDFLAGS		+= --sysroot=$(PI) -L$(PI)/usr/lib/arm-linux-gnueabihf
