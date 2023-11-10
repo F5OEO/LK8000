@@ -161,3 +161,22 @@ LDFLAGS="-L$TARGET_DIR/lib"  \
     PKG_CONFIG_LIBDIR=$TARGET_DIR/lib/pkgconfig
 make && make install
 cd ..
+
+# install libsndfile ( 1.2.2 )
+[ ! -f 1.2.2.tar.gz ] && wget https://github.com/libsndfile/libsndfile/archive/refs/tags/1.2.2.tar.gz
+[ -d libsndfile-1.2.2 ] && rm -rf libsndfile-1.2.2
+
+tar xzf 1.2.2.tar.gz
+cd libsndfile-1.2.2
+autoreconf -vif
+
+CFLAGS=$BUILD_FLAGS \
+LDFLAGS="-L$TARGET_DIR/lib"  \
+./configure \
+    --host=$TC \
+    --prefix=$TARGET_DIR \
+    CPPFLAGS="$BUILD_FLAGS -I$TARGET_DIR/include" \
+    LDFLAGS="-L$TARGET_DIR/lib" \
+    PKG_CONFIG_LIBDIR=$TARGET_DIR/lib/pkgconfig
+make && make install
+cd ..
