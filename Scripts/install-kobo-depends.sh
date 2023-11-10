@@ -113,3 +113,51 @@ LDFLAGS="-L$TARGET_DIR/lib"  \
     PKG_CONFIG_LIBDIR=$TARGET_DIR/lib/pkgconfig
 make && make install
 cd ..
+
+# install bluez-libs ( 3.36 )
+[ ! -f bluez-libs-3.36.tar.gz ] && wget http://bluez.sf.net/download/bluez-libs-3.36.tar.gz
+[ -d bluez-libs-3.36 ] && rm -rf bluez-libs-3.36
+[ -d bluez-libs-build ] && rm -rf bluez-libs-build
+tar xzf bluez-libs-3.36.tar.gz
+mkdir bluez-libs-build
+cd bluez-libs-build
+CFLAGS=$BUILD_FLAGS \
+LDFLAGS="-L$TARGET_DIR/lib"  \
+../bluez-libs-3.36/configure \
+    --host=$TC \
+    --prefix=$TARGET_DIR \
+    PKG_CONFIG_LIBDIR=$TARGET_DIR/lib/pkgconfig
+make && make install
+cd ..
+
+# install readline ( 7.0 2016 )
+[ ! -f readline-7.0.tar.gz ] && wget https://ftp.gnu.org/gnu/readline/readline-7.0.tar.gz
+[ -d readline-7.0 ] && rm -rf readline-7.0
+[ -d readline-build ] && rm -rf readline-build
+tar xzf readline-7.0.tar.gz
+mkdir readline-build
+cd readline-build
+CFLAGS=$BUILD_FLAGS \
+LDFLAGS="-L$TARGET_DIR/lib"  \
+../readline-7.0/configure \
+    --host=$TC \
+    --prefix=$TARGET_DIR \
+    PKG_CONFIG_LIBDIR=$TARGET_DIR/lib/pkgconfig
+make && make install
+cd ..
+
+# install alsa-lib ( 1.2.10 )
+[ ! -f alsa-lib-1.2.10.tar.bz2 ] && wget http://www.alsa-project.org/files/pub/lib/alsa-lib-1.2.10.tar.bz2
+[ -d alsa-lib-1.2.10 ] && rm -rf alsa-lib-1.2.10
+[ -d alsa-build ] && rm -rf alsa-build
+tar xf alsa-lib-1.2.10.tar.bz2
+mkdir alsa-build
+cd alsa-build
+CFLAGS=$BUILD_FLAGS \
+LDFLAGS="-L$TARGET_DIR/lib"  \
+../alsa-lib-1.2.10/configure \
+    --host=$TC \
+    --prefix=$TARGET_DIR \
+    PKG_CONFIG_LIBDIR=$TARGET_DIR/lib/pkgconfig
+make && make install
+cd ..
