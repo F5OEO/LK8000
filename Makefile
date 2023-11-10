@@ -334,13 +334,25 @@ endif
 CE_DEFS :=
 
 ######## target depends definitions
-ifeq ($(TARGET_IS_KOBO),y)
+ifeq ($(TARGET_IS_KOBO)$(TARGET_IS_KOBODL),yn)
  USE_SDL   :=n
  GLES2     :=n
  GREYSCALE :=y
  DITHER    :=y
  OPENGL    :=n
  USE_SOUND_EXTDEV := y
+ USE_LIBINPUT :=n
+ CE_DEFS += -DKOBO
+ CE_DEFS += -DUSE_MEMORY_CANVAS
+endif
+
+ifeq ($(TARGET_IS_KOBO)$(TARGET_IS_KOBODL),yy)
+ USE_SDL   :=n
+ GLES2     :=n
+ GREYSCALE :=y
+ DITHER    :=y
+ OPENGL    :=n
+ USE_SOUND_EXTDEV := n
  USE_LIBINPUT :=n
  CE_DEFS += -DKOBO
  CE_DEFS += -DUSE_MEMORY_CANVAS
