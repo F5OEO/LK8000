@@ -671,7 +671,9 @@ ifeq ($(TARGET_IS_KOBO),y)
  # the stock Kobo firmware, as it may be incompatible
  LDFLAGS += -Wl,--dynamic-linker=/opt/LK8000/lib/ld-linux-armhf.so.3
  LDFLAGS += -Wl,--rpath=/opt/LK8000/lib
-
+#ifeq ($(BLE),y)
+# $(eval $(call pkg-config-library,LIBGATTLIB,libgattlib))
+#endif
 endif
 
 ifeq ($(HOST_IS_PI)$(TARGET_IS_PI),ny)
@@ -709,7 +711,8 @@ ifeq ($(CONFIG_LINUX),y)
  LDLIBS += $(SNDFILE_LDLIBS)
  LDLIBS += $(LIBINPUT_LDLIBS)
  LDLIBS += $(LIBUDEV_LDLIBS)
-
+ LDLIBS += $(LIBGATTLIB)
+ 
  ifneq ($(GCC_GTEQ_910),1) 
   LDLIBS += -lstdc++fs
  endif

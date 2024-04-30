@@ -50,6 +50,24 @@ ifeq ($(SNDFILE)$(ALSA),yy)
 
 endif
 
+ifeq ($(BLE),y)
+ KOBO_LIB_PATHS += \
+	$(KOBO)/lib/libgattlib.so \
+	$(KOBO)/lib/libbluetooth.so.3 \
+	$(KOBO)/lib/libdbus-1.so.3 \
+	$(KOBO)/lib/libpcre.so.1 \
+	
+KOBO_BLE_BIN = ble_udp
+
+KOBO_BLE_SOURCES = \
+    $(SRC)/kobo/ble_udp.c 
+    
+KOBO_BLE_OBJ     = \
+    $(patsubst $(SRC)%.c,$(BIN)%.o,$(KOBO_BLE_SOURCES)) \
+    
+
+endif
+
 # let only the existing file in the list
 KOBO_SYS_LIB_PATHS += $(filter $(KOBO_LIB_PATHS), $(wildcard $(KOBO)/lib/*))
 
@@ -102,7 +120,7 @@ $(Q)install -m 0755 -d  $(BIN)/$(1)/KoboRoot/opt/LK8000/share/fonts
 $(Q)install -m 0755 -d  $(BIN)/$(1)/KoboRoot/opt/LK8000/share/_System/_Bitmaps
 
 $(Q)install -m 0644 kobo/inittab $(BIN)/$(1)/KoboRoot/etc
-$(Q)install -m 0755 $(OUTPUTS) $(KOBO_MENU_BIN) $(KOBO_POWER_OFF_BIN) kobo/rcS $(BIN)/$(1)/KoboRoot/opt/LK8000/bin
+$(Q)install -m 0755 $(OUTPUTS) $(KOBO_MENU_BIN) $(KOBO_POWER_OFF_BIN) $(KOBO_BLE_BIN) kobo/rcS $(BIN)/$(1)/KoboRoot/opt/LK8000/bin
 $(Q)install --strip --strip-program=$(STRIP) -m 0755 $(KOBO_SYS_LIB_PATHS) $(BIN)/$(1)/KoboRoot/opt/LK8000/lib
 
 $(Q)install -m 0644 $(FONTS_FILES) $(BIN)/$(1)/KoboRoot/opt/LK8000/share/fonts
@@ -129,7 +147,7 @@ Kobo-install.zip: $(BIN)/std/.kobo/KoboRoot.tgz
 # /mnt/onboard/.kobo/KoboRoot.tgz is a file that is picked up by
 # /etc/init.d/rcS, extracted to / on each boot; we can use it to
 # install LK8000
-$(BIN)/std/.kobo/KoboRoot.tgz: $(OUTPUTS) $(KOBO_MENU_BIN) $(KOBO_POWER_OFF_BIN) \
+$(BIN)/std/.kobo/KoboRoot.tgz: $(OUTPUTS) $(KOBO_MENU_BIN) $(KOBO_POWER_OFF_BIN) $(KOBO_BLE_BIN) \
 	$(SYSTEM_FILES) $(BITMAP_FILES) $(SOUND_FILES) \
 	$(FONTS_FILES) $(POLAR_FILES) $(LANGUAGE_FILES) \
 	$(CONFIG_FILES)  kobo/inittab kobo/rcS
@@ -164,5 +182,17 @@ $(KOBO_POWER_OFF_BIN) : $(KOBO_POWER_OFF_BIN)_ns
 $(KOBO_POWER_OFF_BIN)_ns : $(KOBO_POWER_OFF_OBJ)
 	@$(NQ)echo "  LINK    $@"
 	$(Q)$(CC) $(LDFLAGS) $(TARGET_ARCH) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+ifeq ($(BLE),y)
+
+$(KOBO_BLE_BIN) : $(KOBO_BLE_BIN)_ns
+	@$(NQ)echo "  STRIP   $@"
+	$(Q)$(STRIP) $< -o $@
+	$(Q)$(SIZE) $@
+
+$(KOBO_BLE_BIN)_ns : $(KOBO_BLE_OBJ)
+	@$(NQ)echo "  LINK    $@"
+	$(Q)$(CC) $(LDFLAGS) $(TARGET_ARCH) $^ $(LOADLIBES) $(LDLIBS) -o $@	
+endif
 
 endif
