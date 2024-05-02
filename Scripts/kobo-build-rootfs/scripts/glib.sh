@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e -u
-ARCHIVE_URL=https://download.gnome.org/sources/glib/2.40/glib-2.40.2.tar.xz
-ARCHIVE=glib-2.40.2.tar.xz
-ARCHIVEDIR=glib-2.40.2
+ARCHIVE_URL=https://download.gnome.org/sources/glib/2.44/glib-2.44.1.tar.xz
+ARCHIVE=glib-2.44.1.tar.xz
+ARCHIVEDIR=glib-2.44.1
 . $KOBO_SCRIPT_DIR/build-common.sh
 pushd $ARCHIVEDIR
 
