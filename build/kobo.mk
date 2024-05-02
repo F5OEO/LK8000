@@ -25,6 +25,8 @@ KOBO_SYS_LIB_NAMES = \
 	libgcc_s.so.1 \
 	librt.so.1 \
 	libpthread.so.0 \
+	libglib-2.so.0 \
+	libgio-2.so.0 \
 
 ifeq ($(SNDFILE)$(ALSA),yy)
  KOBO_SYS_LIB_NAMES += libdl.so.2
@@ -60,7 +62,7 @@ ifeq ($(BLE),y)
 KOBO_BLE_BIN = ble_udp
 
 KOBO_BLE_SOURCES = \
-    $(SRC)/kobo/ble_udp.c 
+    $(SRC)/kobo/ble_udp.c
     
 KOBO_BLE_OBJ     = \
     $(patsubst $(SRC)%.c,$(BIN)%.o,$(KOBO_BLE_SOURCES)) \
@@ -192,7 +194,7 @@ $(KOBO_BLE_BIN) : $(KOBO_BLE_BIN)_ns
 
 $(KOBO_BLE_BIN)_ns : $(KOBO_BLE_OBJ)
 	@$(NQ)echo "  LINK    $@"
-	$(Q)$(CC) $(LDFLAGS) $(TARGET_ARCH) $^ $(LOADLIBES) $(LDLIBS) -o $@	
+	$(Q)$(CC) $(LDFLAGS) $(TARGET_ARCH) $^ $(LOADLIBES) $(LDLIBS) -lgattlib -lglib-2.0 -lgio-2.0 -lgobject-2.0 -liconv -lffi -lgmodule-2.0 -o $@	
 endif
 
 endif
