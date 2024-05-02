@@ -25,8 +25,7 @@ KOBO_SYS_LIB_NAMES = \
 	libgcc_s.so.1 \
 	librt.so.1 \
 	libpthread.so.0 \
-	libglib-2.so.0 \
-	libgio-2.so.0 \
+	
 
 ifeq ($(SNDFILE)$(ALSA),yy)
  KOBO_SYS_LIB_NAMES += libdl.so.2
@@ -58,7 +57,14 @@ ifeq ($(BLE),y)
 	$(KOBO)/lib/libbluetooth.so.3 \
 	$(KOBO)/lib/libdbus-1.so.3 \
 	$(KOBO)/lib/libpcre.so.1 \
-	
+	$(KOBO)/lib/libglib-2.0.so.0 \
+	$(KOBO)/lib/libgio-2.0.so.0 \
+	$(KOBO)/lib/libffi.so.8 \
+	$(KOBO)/lib/libgmodule-2.0.so.0 \
+	$(KOBO)/lib/libiconv.so.2 \
+	$(KOBO)/lib/libgobject-2.0.so.0 \
+
+
 KOBO_BLE_BIN = ble_udp
 
 KOBO_BLE_SOURCES = \
