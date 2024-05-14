@@ -25,6 +25,7 @@ KOBO_SYS_LIB_NAMES = \
 	libgcc_s.so.1 \
 	librt.so.1 \
 	libpthread.so.0 \
+	libresolv.so.2 \
 	
 
 ifeq ($(SNDFILE)$(ALSA),yy)
