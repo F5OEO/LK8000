@@ -44,6 +44,15 @@ class pcm_hw_params {
   snd_pcm_hw_params_t *params;
 };
 
+#define check(ret)                                                          \
+    do {                                                                    \
+        int res = (ret);                                                    \
+        if (res < 0) {                                                      \
+            fprintf(stderr, "%s:%d ERROR: %s (%d)\n",                       \
+                __FILE__, __LINE__, snd_strerror(res), res);                \
+        }                                                                   \
+    } while (0)
+
 class pcm_sw_params {
  public: 
   pcm_sw_params() {
@@ -65,21 +74,36 @@ class pcm_sw_params {
 void init_hw_params(const SF_INFO& sfinfo) {
   /* Allocate parameters object and fill it with default values*/
   pcm_hw_params hw_params;
-  snd_pcm_hw_params_any(pcm_handle, hw_params);
+  check(snd_pcm_hw_params_any(pcm_handle, hw_params));
   /* Set parameters */
-  snd_pcm_hw_params_set_access(pcm_handle, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
-  snd_pcm_hw_params_set_format(pcm_handle, hw_params, SND_PCM_FORMAT_S16_LE);
-  snd_pcm_hw_params_set_channels(pcm_handle, hw_params, sfinfo.channels);
-  snd_pcm_hw_params_set_rate(pcm_handle, hw_params, sfinfo.samplerate, 0);
+  check(snd_pcm_hw_params_set_access(pcm_handle, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED));
+  check(snd_pcm_hw_params_set_format(pcm_handle, hw_params, SND_PCM_FORMAT_S16_LE));
+  
+  check(snd_pcm_hw_params_set_channels(pcm_handle, hw_params, sfinfo.channels));
+  check(snd_pcm_hw_params_set_rate(pcm_handle, hw_params, sfinfo.samplerate, 0));
+  //check(snd_pcm_hw_params_set_buffer_size(pcm_handle, hw_params,16384));
+  snd_pcm_uframes_t minframe;
+  snd_pcm_hw_params_get_buffer_size_min(hw_params,&minframe);
+  //fprintf(stderr,"Min frame %ld\n",minframe);
 
+  snd_pcm_uframes_t minperiod;
+  snd_pcm_hw_params_get_period_size_min(hw_params,&minperiod,0);
+  //fprintf(stderr,"Min period %ld\n",minperiod);
+
+  check(snd_pcm_hw_params_set_buffer_size(pcm_handle, hw_params,2048));
+  check(snd_pcm_hw_params_set_period_size(pcm_handle, hw_params,1024,0));
+
+  //check(snd_pcm_hw_params_set_buffer_size(pcm_handle, hw_params,minframe*8));
+  //check(snd_pcm_hw_params_set_period_size(pcm_handle, hw_params,minframe*2,0));
   /* Makes sure buffer frames is even, or snd_pcm_hw_params will return invalid argument error. */
   snd_pcm_uframes_t buffer_frames;
-  snd_pcm_hw_params_get_buffer_size_max(hw_params, &buffer_frames);
+  check(snd_pcm_hw_params_get_buffer_size_max(hw_params, &buffer_frames));
+  //fprintf(stderr,"Debug : buffer_frames %ld \n",buffer_frames);
   buffer_frames &= ~0x01;
-  snd_pcm_hw_params_set_buffer_size_max(pcm_handle, hw_params, &buffer_frames);
+  check(snd_pcm_hw_params_set_buffer_size_max(pcm_handle, hw_params, &buffer_frames));
 
   /* set hw parameters and prepare */
-  snd_pcm_hw_params(pcm_handle, hw_params);
+  check(snd_pcm_hw_params(pcm_handle, hw_params));
 }
 
 void init_sw_params() {
@@ -131,6 +155,7 @@ void alsa_play(SNDFILE* infile, const SF_INFO& sfinfo) {
 
     snd_pcm_uframes_t to_write = sfinfo.frames;
     while (to_write > 0) {
+     
       wait_for_poll(pcm_handle, ufds.get(), count);
 
       auto available = snd_pcm_avail(pcm_handle);
@@ -158,7 +183,45 @@ void alsa_play(SNDFILE* infile, const SF_INFO& sfinfo) {
 
       int readcount = sf_readf_short(infile, buff + buffoffset, buffsize);
       snd_pcm_mmap_commit(pcm_handle, offset, readcount);
+      
       to_write -= readcount;
+    }
+    #define MIN_SAMPLE_WORKAROUND (4096)
+    if(sfinfo.frames<MIN_SAMPLE_WORKAROUND)
+    {
+        snd_pcm_uframes_t to_write = MIN_SAMPLE_WORKAROUND-sfinfo.frames;
+        while (to_write > 0) {
+      
+      wait_for_poll(pcm_handle, ufds.get(), count);
+
+      auto available = snd_pcm_avail(pcm_handle);
+      if (available < 0) {
+        available = snd_recovery(pcm_handle, available);
+      }
+      if (available <= 0) {
+        continue;
+      }
+
+      const snd_pcm_channel_area_t* areas;
+      snd_pcm_uframes_t offset;
+      snd_pcm_uframes_t frames = to_write;
+      int err = snd_pcm_mmap_begin(pcm_handle, &areas, &offset, &frames);
+      if (err < 0) {
+        err = snd_recovery(pcm_handle, available);
+      }
+      if (err < 0) {
+        continue;
+      }
+
+      auto buff = static_cast<int16_t*>(areas->addr);
+      ssize_t buffsize = snd_pcm_frames_to_bytes(pcm_handle, frames) / sizeof(int16_t);
+      ssize_t buffoffset = snd_pcm_frames_to_bytes(pcm_handle, offset) / sizeof(int16_t);
+
+      memset(buff + buffoffset,0, buffsize*sizeof(int16_t));
+      snd_pcm_mmap_commit(pcm_handle, offset, buffsize);
+      
+      to_write -= buffsize;
+    }
     }
     snd_pcm_drain(pcm_handle);
   } catch (std::exception& e) {
@@ -270,7 +333,9 @@ void play_resource(const std::string& name) {
     // Open the sound file
     SF_INFO sfinfo = {};
     SNDFILE* infile = sf_open_virtual(&VirtualIO, SFM_READ, &sfinfo, &Memory);
+    //fprintf(stderr,"Try playing memory %p Size %d\n",infile,sndBuffer.size);
     if (infile) {
+      
       alsa_play(infile, sfinfo);
       sf_close(infile);
     }
