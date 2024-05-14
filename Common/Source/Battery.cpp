@@ -95,7 +95,10 @@ bool GetBatteryInfo(BATTERYINFO* pBatteryInfo)
     char line[256];
     if (!File::ReadString("/sys/class/power_supply/mc13892_bat/uevent",
             line, sizeof (line))) {
-        return false;
+          if (!File::ReadString("/sys/class/power_supply/battery/uevent",
+            line, sizeof (line))) {
+              return false;
+        }
     }
 
     char field[80], value[80];
