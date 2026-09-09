@@ -1,2 +1,3 @@
 source "../package/geographiclib/Config.in"
 source "../package/gattlib/Config.in"
+source "../package/lk8000websrv/Config.in"
