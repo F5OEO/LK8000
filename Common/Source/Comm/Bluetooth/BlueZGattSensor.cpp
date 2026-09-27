@@ -14,7 +14,7 @@
 #include <utility>
 
 bool BlueZGattSensor::Connect() {
-  gattlib_backend::Callbacks callbacks = {
+  bluez_dbus_backend::Callbacks callbacks = {
     .self = this,
     .on_connected = &BlueZGattSensor::OnConnected,
     .on_disconnected = &BlueZGattSensor::OnDisconnected,
@@ -22,8 +22,8 @@ bool BlueZGattSensor::Connect() {
     .on_characteristic_changed = &BlueZGattSensor::OnCharacteristicChangedCb,
   };
 
-  gattlib_backend::Connection* new_connection =
-      gattlib_backend::Connect(GetPortName(), callbacks);
+  bluez_dbus_backend::Connection* new_connection =
+      bluez_dbus_backend::Connect(GetPortName(), callbacks);
 
   if (!new_connection) {
     throw std::runtime_error("Failed to start Bluetooth LE connection");
@@ -35,10 +35,10 @@ bool BlueZGattSensor::Connect() {
 }
 
 void BlueZGattSensor::Disconnect() {
-  gattlib_backend::Connection* old_connection = WithLock(mutex, [&]() {
+  bluez_dbus_backend::Connection* old_connection = WithLock(mutex, [&]() {
     return std::exchange(connection, nullptr);
   });
-  gattlib_backend::Disconnect(old_connection);
+  bluez_dbus_backend::Disconnect(old_connection);
 }
 
 GattSensor::PortState BlueZGattSensor::GetPortState() const {
@@ -47,22 +47,22 @@ GattSensor::PortState BlueZGattSensor::GetPortState() const {
 
 bool BlueZGattSensor::WriteData(const void* data, size_t size) {
   const std::lock_guard lock(mutex);
-  return connection && gattlib_backend::Write(connection, data, size);
+  return connection && bluez_dbus_backend::Write(connection, data, size);
 }
 
 void BlueZGattSensor::DoWriteGattCharacteristic(const uuid_t& service, const uuid_t& characteristic, const void* data, size_t size) const {
   const std::lock_guard lock(mutex);
-  // gattlib writes by characteristic UUID only; `service` can't be used to
-  // disambiguate a UUID reused across services.
+  // BlueZ's GATT API writes by characteristic object path only; `service`
+  // can't be used to disambiguate a UUID reused across services.
   if (connection) {
-    gattlib_backend::WriteCharacteristic(connection, characteristic, data, size);
+    bluez_dbus_backend::WriteCharacteristic(connection, characteristic, data, size);
   }
 }
 
 void BlueZGattSensor::DoReadGattCharacteristic(const uuid_t& service, const uuid_t& characteristic) {
   const std::lock_guard lock(mutex);
   if (connection) {
-    gattlib_backend::ReadCharacteristic(connection, service, characteristic);
+    bluez_dbus_backend::ReadCharacteristic(connection, service, characteristic);
   }
 }
 

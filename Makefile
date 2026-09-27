@@ -523,20 +523,14 @@ ifeq ($(CONFIG_LINUX),y)
   CE_DEFS += -DUSE_CURL $(patsubst -I%,-isystem %,$(CURL_CPPFLAGS))
  endif
 
- # Bluetooth LE GATT sensor support (BLE: ports), via gattlib/BlueZ D-Bus.
- # Off by default: gattlib isn't a system package on most distros and isn't
- # (yet) part of the Kobo rootfs/Buildroot SDK either -- see CLAUDE.md.
- USE_BLE ?= $(shell $(PKG_CONFIG) --exists gattlib && echo y)
+ # Bluetooth LE GATT sensor support (BLE: ports), via dbus-cxx talking to
+ # BlueZ's D-Bus GATT API directly. Off by default: dbus-cxx isn't a system
+ # package on most distros and isn't (yet) part of the Kobo rootfs/Buildroot
+ # SDK either -- see CLAUDE.md.
+ USE_BLE ?= $(shell $(PKG_CONFIG) --exists dbus-cxx-2.0 && echo y)
  ifeq ($(USE_BLE),y)
-  $(eval $(call pkg-config-library,GATTLIB,gattlib))
-  CE_DEFS += -DUSE_BLE $(patsubst -I%,-isystem %,$(GATTLIB_CPPFLAGS))
-  # GattlibBackend.cpp also calls GDBus (gio) directly (to read BlueZ
-  # Device1 properties gattlib itself doesn't expose, e.g. for BT_SPP:
-  # detection during a scan) -- gio/glib/gobject are otherwise only pulled
-  # in transitively via libgattlib.so, which isn't enough to link our own
-  # direct calls against.
-  $(eval $(call pkg-config-library,GIO,gio-2.0))
-  CE_DEFS += $(patsubst -I%,-isystem %,$(GIO_CPPFLAGS))
+  $(eval $(call pkg-config-library,DBUS_CXX,dbus-cxx-2.0))
+  CE_DEFS += -DUSE_BLE $(patsubst -I%,-isystem %,$(DBUS_CXX_CPPFLAGS))
  endif
 
  # Classic Bluetooth (BT_SPP: ports), via raw AF_BLUETOOTH/RFCOMM sockets --
@@ -723,8 +717,7 @@ ifeq ($(CONFIG_LINUX),y)
  LDLIBS += $(LIBINPUT_LDLIBS)
  LDLIBS += $(LIBUDEV_LDLIBS)
  LDLIBS += $(CURL_LDLIBS)
- LDLIBS += $(GATTLIB_LDLIBS)
- LDLIBS += $(GIO_LDLIBS)
+ LDLIBS += $(DBUS_CXX_LDLIBS)
  LDLIBS += $(BLUEZ_LDLIBS)
 
  ifneq ($(GCC_GTEQ_910),1) 
@@ -1575,7 +1568,7 @@ endif
 
 ifeq ($(USE_BLE),y)
 SRC_FILES += \
-	$(CMM)/Bluetooth/GattlibBackend.cpp \
+	$(CMM)/Bluetooth/BlueZDbusBackend.cpp \
 	$(CMM)/Bluetooth/BlueZGattSensor.cpp \
 	$(CMM)/Bluetooth/BlueZLeScanner.cpp
 endif

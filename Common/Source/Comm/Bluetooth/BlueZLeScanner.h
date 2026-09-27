@@ -5,7 +5,7 @@
  *
  * File:   BlueZLeScanner.h
  *
- * TARGET=LINUX / TARGET=KOBO BLE device scanner, using BlueZ (via gattlib).
+ * TARGET=LINUX / TARGET=KOBO BLE device scanner, using BlueZ (via dbus-cxx).
  * Same public interface as Android/BluetoothLeScanner so dlgConfiguration.cpp
  * uses identical code on both platforms.
  */
@@ -13,7 +13,7 @@
 #ifndef COMM_BLUETOOTH_BLUEZLESCANNER_H
 #define COMM_BLUETOOTH_BLUEZLESCANNER_H
 
-#include "Comm/Bluetooth/GattlibBackend.h"
+#include "Comm/Bluetooth/BlueZDbusBackend.h"
 
 #include <functional>
 
@@ -34,7 +34,7 @@ class BluetoothLeScanner {
 
   WndForm* _pWndForm;
   callback_t _callback;
-  gattlib_backend::ScanHandle* handle = nullptr;
+  bluez_dbus_backend::ScanHandle* handle = nullptr;
 };
 
 #endif  // COMM_BLUETOOTH_BLUEZLESCANNER_H

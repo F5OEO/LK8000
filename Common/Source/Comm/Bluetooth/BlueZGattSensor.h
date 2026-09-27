@@ -6,16 +6,17 @@
  * File:   BlueZGattSensor.h
  *
  * TARGET=LINUX / TARGET=KOBO Bluetooth LE GATT sensor, using BlueZ (via
- * gattlib) as the transport for GattSensor. Requires bluetoothd and a
- * working, powered hci adapter to already be present -- this class does
- * not bring up Bluetooth hardware itself.
+ * dbus-cxx, talking to org.bluez directly over D-Bus) as the transport for
+ * GattSensor. Requires bluetoothd and a working, powered hci adapter to
+ * already be present -- this class does not bring up Bluetooth hardware
+ * itself.
  */
 
 #ifndef COMM_BLUETOOTH_BLUEZGATTSENSOR_H
 #define COMM_BLUETOOTH_BLUEZGATTSENSOR_H
 
 #include "GattSensor.h"
-#include "GattlibBackend.h"
+#include "BlueZDbusBackend.h"
 
 #include <atomic>
 
@@ -41,7 +42,7 @@ class BlueZGattSensor : public GattSensor {
                                         const uint8_t* data, size_t length);
 
   mutable Mutex mutex;
-  gattlib_backend::Connection* connection = nullptr;
+  bluez_dbus_backend::Connection* connection = nullptr;
 
   std::atomic<PortState> port_state{PortState::LIMBO};
 };

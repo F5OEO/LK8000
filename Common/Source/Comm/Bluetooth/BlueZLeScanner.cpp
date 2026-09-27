@@ -13,14 +13,14 @@
 
 BluetoothLeScanner::BluetoothLeScanner(WndForm* pWndForm, callback_t callback)
     : _pWndForm(pWndForm), _callback(std::move(callback)) {
-  handle = gattlib_backend::StartScan(&BluetoothLeScanner::OnDiscovered, this);
+  handle = bluez_dbus_backend::StartScan(&BluetoothLeScanner::OnDiscovered, this);
   if (!handle) {
     throw std::runtime_error("Failed to start Bluetooth LE scan");
   }
 }
 
 BluetoothLeScanner::~BluetoothLeScanner() {
-  gattlib_backend::StopScan(handle);
+  bluez_dbus_backend::StopScan(handle);
 }
 
 void BluetoothLeScanner::OnDiscovered(void* user_data, const char* address, const char* name, bool is_classic_spp) {

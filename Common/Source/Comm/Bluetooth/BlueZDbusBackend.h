@@ -3,14 +3,16 @@
  * Released under GNU/GPL License v.2 or later
  * See CREDITS.TXT file for authors and copyrights
  *
- * File:   GattlibBackend.h
+ * File:   BlueZDbusBackend.h
  *
- * A minimal, LK8000-agnostic wrapper around gattlib/BlueZ D-Bus GATT client
- * calls, used by BlueZGattSensor.
+ * A minimal, LK8000-agnostic wrapper around BlueZ's own D-Bus GATT client
+ * API (org.bluez.Adapter1/Device1/GattService1/GattCharacteristic1), using
+ * dbus-cxx, used by BlueZGattSensor. Talks to bluetoothd directly rather
+ * than through gattlib -- see BlueZDbusBackend.cpp for why.
  */
 
-#ifndef COMM_BLUETOOTH_GATTLIBBACKEND_H
-#define COMM_BLUETOOTH_GATTLIBBACKEND_H
+#ifndef COMM_BLUETOOTH_BLUEZDBUSBACKEND_H
+#define COMM_BLUETOOTH_BLUEZDBUSBACKEND_H
 
 #include <array>
 #include <cstddef>
@@ -19,7 +21,7 @@
 
 class BlueZGattSensor;
 
-namespace gattlib_backend {
+namespace bluez_dbus_backend {
 
 struct Connection;
 
@@ -107,6 +109,6 @@ bool WriteCharacteristic(Connection* connection, const uuid_t& characteristic,
 void ReadCharacteristic(Connection* connection, const uuid_t& service,
                         const uuid_t& characteristic);
 
-} // namespace gattlib_backend
+} // namespace bluez_dbus_backend
 
-#endif  // COMM_BLUETOOTH_GATTLIBBACKEND_H
+#endif  // COMM_BLUETOOTH_BLUEZDBUSBACKEND_H

@@ -29,7 +29,9 @@
 #define _utils_uuid_h_
 
 #include "parse_hex.h"
+#include <cstdio>
 #include <span>
+#include <string>
 
 #ifdef uuid_t
 // this is required to solve conflict on win32 platform
@@ -61,8 +63,14 @@ class uuid_t {
   uuid_t& operator=(uuid_t&&) = default;
   uuid_t& operator=(const uuid_t&) = default;
 
-  constexpr uuid_t(const char (&string)[37]) 
+  constexpr uuid_t(const char (&string)[37])
       : uuid_t(uuid_msb(string), uuid_lsb(string)) {}
+
+  // Runtime (non-constexpr) equivalent of the above, for a UUID string only
+  // known at runtime (e.g. read from a D-Bus property) rather than as a
+  // string literal.
+  explicit uuid_t(const std::string& string)
+      : uuid_t(uuid_msb(string.c_str()), uuid_lsb(string.c_str())) {}
 
   constexpr uuid_t(uint64_t msb, uint64_t lsb) : _msb(msb), _lsb(lsb) {}
 
@@ -85,6 +93,24 @@ class uuid_t {
 
   constexpr uint64_t lsb() const {
     return _lsb;
+  }
+
+  // Canonical lowercase "8-4-4-4-12" dashed hex form, e.g.
+  // "0000180d-0000-1000-8000-00805f9b34fb" -- the string form BlueZ's D-Bus
+  // GATT API identifies services/characteristics by (GattService1.UUID,
+  // GattCharacteristic1.UUID properties), as opposed to gattlib's binary
+  // uuid_t struct.
+  std::string to_string() const {
+    char buf[37];
+    std::snprintf(buf, sizeof(buf),
+                  "%08x-%04x-%04x-%04x-%04x%08x",
+                  static_cast<uint32_t>(_msb >> 32),
+                  static_cast<uint16_t>(_msb >> 16),
+                  static_cast<uint16_t>(_msb),
+                  static_cast<uint16_t>(_lsb >> 48),
+                  static_cast<uint16_t>(_lsb >> 32),
+                  static_cast<uint32_t>(_lsb));
+    return std::string(buf, 36);
   }
 
  private:
