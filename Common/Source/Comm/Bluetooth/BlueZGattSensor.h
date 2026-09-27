@@ -14,8 +14,8 @@
 #ifndef COMM_BLUETOOTH_BLUEZGATTSENSOR_H
 #define COMM_BLUETOOTH_BLUEZGATTSENSOR_H
 
-#include "Comm/Bluetooth/GattSensor.h"
-#include "Comm/Bluetooth/GattlibBackend.h"
+#include "GattSensor.h"
+#include "GattlibBackend.h"
 
 #include <atomic>
 
@@ -32,15 +32,15 @@ class BlueZGattSensor : public GattSensor {
   void DoReadGattCharacteristic(const uuid_t& service, const uuid_t& characteristic) override;
 
  private:
-  static void OnConnected(void* user_data, bool success);
-  static void OnDisconnected(void* user_data);
-  static bool ShouldEnableNotification(void* user_data, const gattlib_backend::uuid128_t& service,
-                                       const gattlib_backend::uuid128_t& characteristic);
-  static void OnCharacteristicChangedCb(void* user_data, const gattlib_backend::uuid128_t& service,
-                                        const gattlib_backend::uuid128_t& characteristic,
+  static void OnConnected(BlueZGattSensor* self, bool success);
+  static void OnDisconnected(BlueZGattSensor* self);
+  static bool ShouldEnableNotification(BlueZGattSensor* self, const uuid_t& service,
+                                       const uuid_t& characteristic);
+  static void OnCharacteristicChangedCb(BlueZGattSensor* self, const uuid_t& service,
+                                        const uuid_t& characteristic,
                                         const uint8_t* data, size_t length);
 
-  Mutex mutex;
+  mutable Mutex mutex;
   gattlib_backend::Connection* connection = nullptr;
 
   std::atomic<PortState> port_state{PortState::LIMBO};
